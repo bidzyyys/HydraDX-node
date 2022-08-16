@@ -439,3 +439,57 @@ fn sell_hub_asset_should_fail_when_asset_out_is_not_allowed_to_buy() {
 			);
 		});
 }
+
+
+#[test]
+fn sell_same_asset_scenario_01() {
+	ExtBuilder::default()
+		.with_endowed_accounts(vec![
+			(Omnipool::protocol_account(), DAI, 1_000_000 * ONE),
+			(Omnipool::protocol_account(), HDX, 1_000_000 * ONE),
+			(LP2, 100, 100_000 * ONE),
+			(LP3, 200, 2000 * ONE),
+			(LP1, 100, 150 * ONE),
+		])
+		.with_registered_asset(100)
+		.with_registered_asset(200)
+		.with_initial_pool(FixedU128::from_float(1.0), FixedU128::from(1))
+		.with_token(100, FixedU128::from_float(1.0), LP2, 10_000 * ONE)
+		.build()
+		.execute_with(|| {
+			let sell_amount = 50 * ONE;
+			let min_limit = 10 * ONE;
+
+			for _ in 0..100 {
+			assert_ok!(Omnipool::sell(Origin::signed(LP1), 100, 100, sell_amount, min_limit));
+			}
+
+			let remaining = Tokens::free_balance(100, &LP1);
+			assert_ok!(Omnipool::sell(Origin::signed(LP1), 100, DAI, remaining, min_limit));
+
+			assert_eq!(Tokens::free_balance(DAI, &LP1), 162604949920379);
+		});
+}
+#[test]
+fn sell_same_asset_scenario_02() {
+	ExtBuilder::default()
+		.with_endowed_accounts(vec![
+			(Omnipool::protocol_account(), DAI, 1_000_000 * ONE),
+			(Omnipool::protocol_account(), HDX, 1_000_000 * ONE),
+			(LP2, 100, 100_000 * ONE),
+			(LP3, 200, 2000 * ONE),
+			(LP1, 100, 150 * ONE),
+		])
+		.with_registered_asset(100)
+		.with_registered_asset(200)
+		.with_initial_pool(FixedU128::from_float(1.0), FixedU128::from(1))
+		.with_token(100, FixedU128::from_float(1.0), LP2, 10_000 * ONE)
+		.build()
+		.execute_with(|| {
+			let min_limit = 10 * ONE;
+			let remaining = Tokens::free_balance(100, &LP1);
+			assert_ok!(Omnipool::sell(Origin::signed(LP1), 100, DAI, remaining, min_limit));
+
+			assert_eq!(Tokens::free_balance(DAI, &LP1), 147761414569275);
+		});
+}
